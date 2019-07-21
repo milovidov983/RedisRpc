@@ -3,11 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29020.237
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisRpc", "RedisRpc.csproj", "{3A7F5DCE-18BF-4110-9E8A-A6FB6A07C70C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisRpc", "RedisRpc\RedisRpc.csproj", "{3A7F5DCE-18BF-4110-9E8A-A6FB6A07C70C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisTestService", "..\RedisTest\RedisTestService.csproj", "{0B3E3ABC-AEC9-4808-9F15-61848C98D472}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisTestService", "RedisTest\RedisTestService.csproj", "{0B3E3ABC-AEC9-4808-9F15-61848C98D472}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisTestClient", "..\RedisTestClient\RedisTestClient.csproj", "{01A7E581-BE78-4828-AE87-4597595BC225}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisTestClient", "RedisTestClient\RedisTestClient.csproj", "{01A7E581-BE78-4828-AE87-4597595BC225}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7119D5BE-77D1-42D7-AB99-139ACE50F8A7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisRpcTests", "tests\RedisRpcTests\RedisRpcTests.csproj", "{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,9 +31,16 @@ Global
 		{01A7E581-BE78-4828-AE87-4597595BC225}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{01A7E581-BE78-4828-AE87-4597595BC225}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{01A7E581-BE78-4828-AE87-4597595BC225}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4} = {7119D5BE-77D1-42D7-AB99-139ACE50F8A7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43DF097C-8F9C-4A58-B14A-A3B87BEFE1E1}

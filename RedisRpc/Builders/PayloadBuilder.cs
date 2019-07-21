@@ -24,11 +24,6 @@ namespace RedisRpc.Builders {
 			return this;
 		}
 
-		public IPayloadBuilder WithBase64(string value) {
-			binaries.Add(Convert.FromBase64String(value));
-			return this;
-		}
-
 		public IPayloadBuilder WithStream(Stream stream) {
 			var buffer = new byte[stream.Length];
 			using (MemoryStream memoryStream = new MemoryStream(buffer)) {

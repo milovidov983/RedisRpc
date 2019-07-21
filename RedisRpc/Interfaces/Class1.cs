@@ -10,8 +10,6 @@ namespace RedisRpc.Interfaces {
 
 		IPayloadBuilder WithBinary(byte[] binary);
 
-		IPayloadBuilder WithBase64(string value);
-
 		IPayloadBuilder WithStream(Stream stream);
 
 		IPayloadBuilder WithError(string error);
