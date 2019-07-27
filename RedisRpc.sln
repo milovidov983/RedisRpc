@@ -13,6 +13,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7119D5BE
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisRpcTests", "tests\RedisRpcTests\RedisRpcTests.csproj", "{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "other", "other", "{7F8A555F-D0C3-4794-AE82-699F7F87AC2F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceCheck", "src\other\PerformanceCheck\PerformanceCheck.csproj", "{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,12 +39,17 @@ Global
 		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4} = {7119D5BE-77D1-42D7-AB99-139ACE50F8A7}
+		{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4} = {7F8A555F-D0C3-4794-AE82-699F7F87AC2F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43DF097C-8F9C-4A58-B14A-A3B87BEFE1E1}

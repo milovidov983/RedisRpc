@@ -18,21 +18,27 @@ namespace RedisRpcTests {
 		}
 
 		[Fact]
-		public void SetOneStream_ReturneOneProperStream() {
-			var testMessage1 = "Test message 1";
-			var testMessage2 = "Test message 2";
+		public void SetTwoStream_ReturneTwoValidStream() {
+			var firstTestData = "42";
+			var secondTestData = "Test message 2";
 
 
 			var payload = new PayloadBuilder()
-				.WithStream(testMessage1.ToStream())
-				.WithStream(testMessage2.ToStream())
+				.WithStream(firstTestData.ToStream())
+				.WithStream(secondTestData.ToStream())
 				.Build();
 
-			var first = payload.Body.Take(payload.Offsets.First()).ToArray();
-			var result = Encoding.UTF8.GetString(first);
+			
+
+			var first = payload.Body.Take(payload.Offsets[1]).ToArray();
+			var second = payload.Body.Skip(payload.Offsets[1]).ToArray();
+
+			var firstResult = Encoding.UTF8.GetString(first);
+			var secondResult = Encoding.UTF8.GetString(second);
 
 
-			Assert.Equal(testMessage1, result);
+			Assert.Equal(firstTestData, firstResult);
+			Assert.Equal(secondTestData, secondResult);
 		}
 
 	}
