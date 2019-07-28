@@ -33,33 +33,17 @@ namespace SomeService.Contracts {
 			/// </summary>
 			public string Results { get; set; }
 		}
-		/// <summary>
-		/// (later remake in struct)
-		/// byte v1 = 1
-		/// byte v2 = 0
-		/// byte v3 = 1
-		/// byte v4 = 0
-		/// 1.0.1.0
-		/// </summary>
-		public const int Version = 1;
 	}
 }
 
-
-namespace RedisRpc {
-	public interface IRpcRedis {
-		Task<TResponse> GetResponse<TResponse, TRequest>(string topic, TRequest request, bool raiseException = true, TimeSpan? timeout = default(TimeSpan?));
-		Task<Stream> GetResponseStream<TRequest>(string topic, TRequest request, bool raiseException = true, TimeSpan? timeout = default(TimeSpan?));
-		Task<TResponse> WithStreamGetResponse<TResponse, TRequest>(string topic, TRequest request, Stream stream, bool raiseException = true, TimeSpan? timeout = default(TimeSpan?));
-	}
-}
 
 namespace ExampleApp {
 	using RedisRpc;
-	using SSC = SomeService.Contracts;
+    using RedisRpc.Interfaces;
+    using SSC = SomeService.Contracts;
 
 	public class Class1 {
-		IRpcRedis rpcService;
+		IRedisHub rpcService;
 
 		public async Task UsageExample() {
 			var result = await rpcService.GetResponse<SSC.GetSomething.Response, SSC.GetSomething.Request>(
@@ -67,6 +51,9 @@ namespace ExampleApp {
 						new SSC.GetSomething.Request {
 							Id = 12345
 						});
+
+
+			
 
 		}
 	}

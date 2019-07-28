@@ -15,7 +15,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisRpcTests", "tests\Redi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "other", "other", "{7F8A555F-D0C3-4794-AE82-699F7F87AC2F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceCheck", "src\other\PerformanceCheck\PerformanceCheck.csproj", "{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PerformanceCheck", "src\other\PerformanceCheck\PerformanceCheck.csproj", "{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCalcService", "RedisCalcService\RedisCalcService.csproj", "{60FA571D-878F-40D0-ADB0-5AF34745943C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCalc.Contracts", "RedisCalc.Contracts\RedisCalc.Contracts.csproj", "{1BA792FD-B622-4AF4-B416-E4624BECDF49}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,13 +47,24 @@ Global
 		{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60FA571D-878F-40D0-ADB0-5AF34745943C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60FA571D-878F-40D0-ADB0-5AF34745943C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60FA571D-878F-40D0-ADB0-5AF34745943C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60FA571D-878F-40D0-ADB0-5AF34745943C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BA792FD-B622-4AF4-B416-E4624BECDF49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BA792FD-B622-4AF4-B416-E4624BECDF49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BA792FD-B622-4AF4-B416-E4624BECDF49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BA792FD-B622-4AF4-B416-E4624BECDF49}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{01A7E581-BE78-4828-AE87-4597595BC225} = {7F8A555F-D0C3-4794-AE82-699F7F87AC2F}
 		{E7F91804-457B-4F3F-B0E7-22ABE6BE0AC4} = {7119D5BE-77D1-42D7-AB99-139ACE50F8A7}
 		{A41BA400-F041-48B5-B2F8-F6FA8A3F35C4} = {7F8A555F-D0C3-4794-AE82-699F7F87AC2F}
+		{60FA571D-878F-40D0-ADB0-5AF34745943C} = {7F8A555F-D0C3-4794-AE82-699F7F87AC2F}
+		{1BA792FD-B622-4AF4-B416-E4624BECDF49} = {7F8A555F-D0C3-4794-AE82-699F7F87AC2F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43DF097C-8F9C-4A58-B14A-A3B87BEFE1E1}

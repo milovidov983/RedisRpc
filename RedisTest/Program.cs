@@ -3,6 +3,9 @@ using System;
 using System.Threading.Tasks;
 
 namespace RedisTest {
+
+
+
 	class Program {
 		private static string QueueName = "RedisTest:Handler:rpc";
 		static void Main(string[] args) {
@@ -16,7 +19,7 @@ namespace RedisTest {
 			sub.Subscribe(QueueName, async (channel, message) => {
 				await Handler(db);
 			});
-			sub.Publish(QueueName, "start");
+			sub.Publish(QueueName, "start"); // bootstrap
 			RunAwaiter();
 
 			Console.WriteLine();

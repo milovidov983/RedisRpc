@@ -8,8 +8,6 @@ namespace RedisRpc.Interfaces {
 	public interface IPayloadBuilder {
 		IPayloadBuilder WithRawContent(string rawContent);
 
-		IPayloadBuilder WithBinary(byte[] binary);
-
 		IPayloadBuilder WithStream(Stream stream);
 
 		IPayloadBuilder WithError(string error);
@@ -20,4 +18,6 @@ namespace RedisRpc.Interfaces {
 
 		Payload Build();
 	}
+
+
 }
