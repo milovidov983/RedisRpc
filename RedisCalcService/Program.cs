@@ -15,15 +15,18 @@ namespace RedisCalcService {
 			Topic = RCC.Add.Topic;
 
 			Console.Title = "RedisCalcService";
+
+
+			Console.WriteLine("Подключение к redis...");
 			ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("localhost");
-
 			IDatabase db = redis.GetDatabase();
-
 			ISubscriber sub = redis.GetSubscriber();
 
 			sub.Subscribe(Topic, async (channel, message) => {
 				await AddCommand(db);
 			});
+			Console.WriteLine("Подключено.");
+
 			sub.Publish(Topic, "start"); // bootstrap
 			RunAwaiter();
 
@@ -33,12 +36,14 @@ namespace RedisCalcService {
 		private static async Task AddCommand(IDatabase db) {
 			var msg = await db.ListRightPopAsync(Topic);
 			if (msg.HasValue) {
+				Console.WriteLine($"Receive message {Topic}");
+
 				var request = JsonConvert.DeserializeObject<DeliveredMessage>(msg);
 
 				var data = JsonConvert.DeserializeObject<RCC.Add.Request>(request.Payload.RawContent);
 
 				var result = new RCC.Add.Response {
-					Results = data.A + data.B
+					Results = data.A * 2
 				};
 
 				var payload = Payload.GetBuilder()
