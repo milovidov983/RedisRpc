@@ -24,7 +24,6 @@ namespace RedisTestClient {
 		private static Options options;
 
 		public static void Setup(Action<Options> setupAction) {
-			//options = setupAction.Invoke();
 			options = new Options();
 			setupAction.Invoke(options);
 		}
