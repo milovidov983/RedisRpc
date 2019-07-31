@@ -1,24 +1,16 @@
 ﻿using Newtonsoft.Json;
-using RedisRpc;
 using RedisRpc.Interfaces;
 using RedisRpc.Models;
 using StackExchange.Redis;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace RedisTestClient {
-	public class Options {
-
-	}
-
-
+namespace RedisRpc {
 	class RedisHub : IRedisHub, IDisposable {
 		private static ISubscriber subscriber;
-		private static ConnectionMultiplexer redis;
+		private static IConnectionMultiplexer redis;
 		private static IDatabase db;
 		private static ISubscriber sub;
 		private static Options options;
@@ -28,23 +20,45 @@ namespace RedisTestClient {
 			setupAction.Invoke(options);
 		}
 
-		public RedisHub() {
-			redis = ConnectionMultiplexer.Connect("localhost");
-			db = redis.GetDatabase();
-			sub = redis.GetSubscriber();
-			subscriber = Hub.StartMainLoop();
+		public RedisHub(Options options) {
+			try {
+				var redisConfig = CreateConfiguration(options);
+
+				redis = ConnectionMultiplexer.Connect(redisConfig);
+				db = redis.GetDatabase();
+				sub = redis.GetSubscriber();
+				subscriber = Hub.StartMainLoop();
+			} catch(Exception e) {
+				throw new Exception("Error creating RedisHub instance. See inner exception.", e);
+			}
 		}
+
+		private static ConfigurationOptions CreateConfiguration(Options options) {
+			if (options == null) {
+				throw new ArgumentNullException($"It is necessary to set the settings, create the configuration class {nameof(Options)} and initialize {nameof(RedisHub)} with it.");
+			}
+			var redisConfig = options?.RedisConfigurationOptions?.Clone() ?? new ConfigurationOptions();
+			redisConfig.AddHosts(options.HostCollection);
+			return redisConfig;
+		}
+
 		public void Dispose() {
 			if (subscriber != null) {
 				subscriber.UnsubscribeAll(CommandFlags.FireAndForget);
 			}
 		}
 
+
 		/// <summary>
 		/// топик для ответа.
 		/// TODO предусмотреть как удалять зависшие очереди когда консьюмер ушёл а сервис ему ответил или
 		/// когда он не успел обработать все ответы.
-		/// Держать специальный список на редисе с (response__key, updatedAt)
+		/// Наверное это можно сделать средаствами настройки редиса,
+		/// но мне хотелось бы что бы библиотека работала с дефолтным редисом без проблем.
+		/// 
+		/// 1) Проверять настройки редиса и если не устаовлен таймаут для очередей то ставить его.
+		/// OR
+		/// 2) Держать специальный список на редисе с (response__key, updatedAt)
 		/// и что бы каждый сам себя обновлял и смотрел если есть просроченные то удалял бы их.
 		/// </summary>
 		public static string responceTopic = $"response__{Guid.NewGuid()}";
@@ -139,4 +153,3 @@ namespace RedisTestClient {
 		#endregion
 	}
 }
-
