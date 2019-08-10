@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RedisRpc.Helpers;
 using RedisRpc.Interfaces;
 using RedisRpc.Models;
 using StackExchange.Redis;
@@ -29,7 +30,7 @@ namespace RedisRpc {
 				sub = redis.GetSubscriber();
 				subscriber = Hub.StartMainLoop();
 			} catch(Exception e) {
-				throw new Exception("Error creating RedisHub instance. See inner exception.", e);
+				throw new RedisHubException("Error creating RedisHub instance. See inner exception.", e);
 			}
 		}
 
@@ -38,7 +39,7 @@ namespace RedisRpc {
 				throw new ArgumentNullException($"It is necessary to set the settings, create the configuration class {nameof(Options)} and initialize {nameof(RedisHub)} with it.");
 			}
 			var redisConfig = options?.RedisConfigurationOptions?.Clone() ?? new ConfigurationOptions();
-			redisConfig.AddHosts(options.HostCollection);
+			redisConfig.AddHosts(options.HostsCollection);
 			return redisConfig;
 		}
 
@@ -48,20 +49,28 @@ namespace RedisRpc {
 			}
 		}
 
-
 		/// <summary>
-		/// топик для ответа.
-		/// TODO предусмотреть как удалять зависшие очереди когда консьюмер ушёл а сервис ему ответил или
-		/// когда он не успел обработать все ответы.
-		/// Наверное это можно сделать средаствами настройки редиса,
+		/// Топик для ответа.
+		/// </summary>
+		/// <remarks>
+		/// Ключ для redis list в который сервер кладёт ответы на запросы клиента. 
+		/// И он же ключ для подписки на канал редиса который дёргается сервером когда он положил ответ в лист
+		/// </remarks>
+		/// TODO 
+		/// Предусмотреть как удалять зависшие очереди(responseTopic) 
+		/// когда консьюмер ушёл а сервис ему ответил в responseTopic 
+		/// или когда он не успел обработать все ответы.
+		/// Наверное это можно сделать средствами настройки редиса,
 		/// но мне хотелось бы что бы библиотека работала с дефолтным редисом без проблем.
 		/// 
-		/// 1) Проверять настройки редиса и если не устаовлен таймаут для очередей то ставить его.
+		/// 1) Проверять настройки редиса и если не установлен тайм аут для очередей то ставить его.
 		/// OR
 		/// 2) Держать специальный список на редисе с (response__key, updatedAt)
-		/// и что бы каждый сам себя обновлял и смотрел если есть просроченные то удалял бы их.
-		/// </summary>
-		public static string responceTopic = $"response__{Guid.NewGuid()}";
+		/// и что бы каждый сам себя обновлял и смотрел если есть просроченные то удалял бы их
+		/// (чревато ошибками если не аккуратно написать систему по управлению этим велосипедом).
+		public static string responseTopic = $"response__{Guid.NewGuid()}";
+		
+		//TODO: не забыть про TimeSpan? timeout = null
 		public async Task<TResponse> GetResponse<TResponse, TRequest>(string topic, TRequest request, bool raiseException = true, TimeSpan? timeout = null) {
 			var rawContent = request.ToJson();
 
@@ -69,15 +78,10 @@ namespace RedisRpc {
 				.WithRawContent(rawContent)
 				.Build();
 
-
-			var dm = new DeliveredMessage(payload) {
-				ResponseTopic = responceTopic,
-				CorrelationId = Guid.NewGuid()
-			};
-
+			var dm = new DeliveredMessage(responseTopic, payload);
 
 			var responseTask = Hub.Get(dm.CorrelationId);
-			var value = await db.ListRightPushAsync(topic, dm.ToJson());
+			await db.ListRightPushAsync(topic, dm.ToJson());
 			sub.Publish(topic, "new message come", CommandFlags.FireAndForget);
 
 			var response = await responseTask;
@@ -85,22 +89,37 @@ namespace RedisRpc {
 			if (string.IsNullOrEmpty(response.Error)) {
 				return JsonConvert.DeserializeObject<TResponse>(response.RawContent);
 			} else {
-				throw new Exception(response.Error);
+				if (raiseException) {
+					throw new RedisHubException(response.Error);
+				}
 			}
-
-
+			return default;
 		}
 
 
-		public static class Hub {
-			private static string QueueName = "RedisTest:Handler:rpc";
-			private static readonly ConcurrentDictionary<Guid, Message> rpcRequests = new ConcurrentDictionary<Guid, Message>();
+		private static class Hub {
+
+			/// <summary>
+			/// Произвольное имя ключа для запуска подписчика.
+			/// </summary>
+			private static string StartupRandomTopic = $"StartupRandomTopic:{Guid.NewGuid()}:rpc";
+			/// <summary>
+			// ? Список сообщений ожидающих ответа?
+			/// </summary>
+			private static readonly ConcurrentDictionary<Guid, ResponseMessage> awaitingRequests = new ConcurrentDictionary<Guid, ResponseMessage>();
 			public static bool Running;
 
-			public class Message {
-				public delegate void Handler(Payload p);
+	
+			public class ResponseMessage {				
+				// ? Тип делегата который будет вызван когда сообщение доставлено из очереди.
+				public delegate void Handler(Payload payload);
 				// Событие, возникающее при добавлении нагрузки из очереди редиса
 				public event Handler AddedPayload;
+
+				/// <summary>
+				/// При присваивании данному свойству объекта, 
+				/// будет вызвано событие добавления данных из очереди.
+				/// </summary>
 				public Payload Payload {
 					set {
 						AddedPayload(value);
@@ -108,13 +127,24 @@ namespace RedisRpc {
 				}
 			}
 
-
+			/// <summary>
+			/// Функция создает объект ResponseMessage который помещает его в коллекцию ожидания(?)
+			/// 
+			/// </summary>
+			/// <param name="correlationId">Уникальный id ответа.</param>
+			/// <returns></returns>
 			public static Task<Payload> Get(Guid correlationId) {
-				var msgResponse = new Message();
-
-				rpcRequests.TryAdd(correlationId, msgResponse);
+				// Подготовка объекта получающего ответ.
+				// Создаем объект для ответа
+				var msgResponse = new ResponseMessage();
+				// Задача которая будет вызвана при получении ответа
 				var tcs = new TaskCompletionSource<Payload>();
-				rpcRequests[correlationId].AddedPayload += (payload) => { tcs.SetResult(payload); };
+				// Привязываем задачу к событию
+				msgResponse.AddedPayload += (payload) => { tcs.SetResult(payload); };
+
+				// Кладем подготовленный объект в коллекцию ожидающих ответ.
+				awaitingRequests.TryAdd(correlationId, msgResponse);
+				//awaitingRequests[correlationId].AddedPayload += (payload) => { tcs.SetResult(payload); };
 
 				return tcs.Task;
 			}
@@ -124,17 +154,17 @@ namespace RedisRpc {
 				IDatabase db = redis.GetDatabase();
 				ISubscriber sub = redis.GetSubscriber();
 
-				sub.Subscribe(responceTopic, async (channel, message) => {
-					var msg = await db.ListRightPopAsync(responceTopic);
+				sub.Subscribe(responseTopic, async (channel, message) => {
+					var msg = await db.ListRightPopAsync(responseTopic);
 
 					while (msg.HasValue) {
 						var dm = JsonConvert.DeserializeObject<DeliveredMessage>(msg.ToString());
-						rpcRequests[dm.CorrelationId].Payload = dm.Payload;
+						awaitingRequests[dm.CorrelationId].Payload = dm.Payload;
 
-						msg = await db.ListRightPopAsync(responceTopic);
+						msg = await db.ListRightPopAsync(responseTopic);
 					}
 				});
-				sub.Publish(QueueName, "bootstrap");
+				sub.Publish(StartupRandomTopic, string.Empty);
 				return sub;
 			}
 		}

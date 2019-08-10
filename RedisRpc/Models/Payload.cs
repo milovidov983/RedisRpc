@@ -1,18 +1,15 @@
-﻿using RedisRpc.Builders;
-using RedisRpc.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace RedisRpc.Models {
-	public class Payload {
+﻿namespace RedisRpc.Models {
+	using RedisRpc.Builders;
+	using RedisRpc.Interfaces;
+	using System;
+	internal class Payload {
 		public readonly string RawContent;
 		public readonly string Error;
 		public readonly string ExtendedInfo;
 		public readonly byte[] Body;
 		public readonly int? StatusCode;
 
-		public Payload(
+		internal Payload(
 		  string rawContent,
 		  byte[] body,
 		  string error,
@@ -25,7 +22,7 @@ namespace RedisRpc.Models {
 			StatusCode = statusCode;
 		}
 
-		public static IPayloadBuilder GetBuilder() {
+		internal static IPayloadBuilder GetBuilder() {
 			return new PayloadBuilder();
 		}
 	}

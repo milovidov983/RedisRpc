@@ -1,12 +1,7 @@
-﻿using RedisRpc.Interfaces;
-using RedisRpc.Models;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-
-namespace RedisRpc.Builders {
+﻿namespace RedisRpc.Builders {
+	using RedisRpc.Interfaces;
+	using RedisRpc.Models;
+	using System.IO;
 	internal class PayloadBuilder : IPayloadBuilder {
 		private string rawContent = string.Empty;
 		private byte[] binary;

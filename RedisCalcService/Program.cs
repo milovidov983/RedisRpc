@@ -55,7 +55,7 @@ namespace RedisCalcService {
 					ResponseTopic = request.ResponseTopic
 				};
 
-				
+
 
 				Hub.SendResponseAsync(dm);
 
@@ -69,7 +69,7 @@ namespace RedisCalcService {
 			private static IDatabase db;
 			private static ISubscriber sub;
 
-			static Hub(){
+			static Hub() {
 				redis = ConnectionMultiplexer.Connect("localhost");
 				db = redis.GetDatabase();
 				sub = redis.GetSubscriber();

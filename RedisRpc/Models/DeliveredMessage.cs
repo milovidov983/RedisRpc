@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace RedisRpc.Models {
+	using System;
+	internal class DeliveredMessage {
+		public Payload Payload { get; }
+		public string ResponseTopic { get;  }
+		public Guid CorrelationId { get;  }
 
-namespace RedisRpc.Models {
-	public class DeliveredMessage {
-		public Payload Payload { get; set; }
-		public string ResponseTopic { get; set; }
-		public Guid CorrelationId { get; set; }
-
-		public DeliveredMessage(Payload payload) {
+		public DeliveredMessage(string responseTopic, Payload payload) {
 			Payload = payload;
-
+			CorrelationId = Guid.NewGuid();
+			ResponseTopic = responseTopic;
 		}
 	}
 }

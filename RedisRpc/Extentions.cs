@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace RedisRpc {
-	public static class Extentions {
+	internal static class Extentions {
 		public static JsonSerializerSettings JsonSettings { get; private set; }
 		public static string ToJson<T>(this T payload) {
 			return JsonConvert.SerializeObject(payload, JsonSettings);
