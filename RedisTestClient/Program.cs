@@ -21,7 +21,9 @@ namespace RedisTestClient {
 			Console.Title = "RedisTestClient";
 
 			Console.WriteLine("Подключение к redis...");
-			rpcService = new RedisHub();
+			rpcService = new RedisHub(new Options { HostsCollection = new System.Collections.Generic.List<(string Host, int Port)> {
+				(Host:"localhost", Port:6379)
+			} });
 			Console.WriteLine("Подключено.");
 			int num = 1;
 			while (true) {
