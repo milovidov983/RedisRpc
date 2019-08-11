@@ -1,14 +1,15 @@
-﻿using Newtonsoft.Json;
-using RedisRpc.Helpers;
-using RedisRpc.Interfaces;
-using RedisRpc.Models;
-using StackExchange.Redis;
-using System;
-using System.Collections.Concurrent;
-using System.IO;
-using System.Threading.Tasks;
+﻿using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("RedisCalcService")]
 
 namespace RedisRpc {
+	using RedisRpc.Helpers;
+	using RedisRpc.Interfaces;
+	using RedisRpc.Models;
+	using StackExchange.Redis;
+	using System;
+	using System.IO;
+	using System.Threading.Tasks;
 	public class RedisHub : IRedisHub, IDisposable {
 		private static Options options;
 
@@ -36,7 +37,7 @@ namespace RedisRpc {
 		/// 2) Держать специальный список на редисе с (response__key, updatedAt)
 		/// и что бы каждый сам себя обновлял и смотрел если есть просроченные то удалял бы их
 		/// (чревато ошибками если не аккуратно написать систему по управлению этим велосипедом).
-		public static string responseTopic = $"response__{Guid.NewGuid()}";
+		private readonly string responseTopic = $"response__{Guid.NewGuid()}";
 		private readonly ConnectionMultiplexer redis;
 		private readonly Client client;
 
@@ -49,7 +50,8 @@ namespace RedisRpc {
 				var connection = new Connection(
 					database: redis.GetDatabase(),
 					subscriber: redis.GetSubscriber(),
-					responseTopic: responseTopic
+					responseTopic: responseTopic,
+					timeout: options.Timeout
 					);
 
 				client = new Client(connection);

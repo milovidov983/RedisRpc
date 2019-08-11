@@ -1,13 +1,16 @@
 ﻿namespace RedisRpc.Builders {
 	using RedisRpc.Interfaces;
 	using RedisRpc.Models;
-	using System.IO;
+    using System;
+    using System.IO;
 	internal class PayloadBuilder : IPayloadBuilder {
 		private string rawContent = string.Empty;
 		private byte[] binary;
 		private string error;
 		private string extendedInfo;
 		private int? statusCode;
+		private Exception exception;
+		
 
 		public IPayloadBuilder WithRawContent(string rawContent) {
 			this.rawContent = rawContent ?? string.Empty;
@@ -37,8 +40,13 @@
 			return this;
 		}
 
+		public IPayloadBuilder WithExceptionCode(Exception exception) {
+			this.exception = exception;
+			return this;
+		}
+
 		public virtual Payload Build() {
-			return new Payload(rawContent, binary, error, statusCode, extendedInfo);
+			return new Payload(rawContent, binary, error, statusCode, extendedInfo, exception);
 		}
 	}
 }

@@ -11,8 +11,8 @@ namespace RedisRpc {
 		public static string ToJson<T>(this T payload) {
 			return JsonConvert.SerializeObject(payload, JsonSettings);
 		}
-		public static T GetContent<T>(this Payload messageInfo) {
-			return JsonConvert.DeserializeObject<T>(messageInfo.RawContent);
+		public static T GetContent<T>(this DeliveredMessage messageInfo) { 
+			return JsonConvert.DeserializeObject<T>(messageInfo.Payload.RawContent);
 		}
 
 
