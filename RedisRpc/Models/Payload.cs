@@ -3,12 +3,12 @@
 	using RedisRpc.Interfaces;
 	using System;
 	internal class Payload {
-		public readonly string RawContent;
-		public readonly string Error;
-		public readonly string ExtendedInfo;
-		public readonly byte[] Body;
-		public readonly int? StatusCode;
-		public readonly Exception Exception;
+		public string RawContent;
+		public string Error;
+		public string ExtendedInfo;
+		public byte[] Body;
+		public int? StatusCode;
+		public Exception Exception;
 
 		internal Payload(
 		  string rawContent,
@@ -24,6 +24,8 @@
 			StatusCode = statusCode;
 			Exception = exception;
 		}
+
+		internal Payload() { }
 
 		internal static IPayloadBuilder GetBuilder() {
 			return new PayloadBuilder();

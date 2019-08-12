@@ -37,24 +37,24 @@ namespace SomeService.Contracts {
 }
 
 
-namespace ExampleApp {
-	using RedisRpc;
-    using RedisRpc.Interfaces;
-    using SSC = SomeService.Contracts;
+//namespace ExampleApp {
+//	using RedisRpc;
+//    using RedisRpc.Interfaces;
+//    using SSC = SomeService.Contracts;
 
-	public class Class1 {
-		IRedisHub rpcService;
+//	public class Class1 {
+//		IRedisHub rpcService;
 
-		public async Task UsageExample() {
-			var result = await rpcService.GetResponse<SSC.GetSomething.Response, SSC.GetSomething.Request>(
-						SSC.GetSomething.Topic,
-						new SSC.GetSomething.Request {
-							Id = 12345
-						});
+//		public async Task UsageExample() {
+//			var result = await rpcService.GetResponse<SSC.GetSomething.Response, SSC.GetSomething.Request>(
+//						SSC.GetSomething.Topic,
+//						new SSC.GetSomething.Request {
+//							Id = 12345
+//						});
 
 
 			
 
-		}
-	}
-}
+//		}
+//	}
+//}

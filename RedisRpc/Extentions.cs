@@ -1,11 +1,10 @@
-﻿using Newtonsoft.Json;
-using RedisRpc.Models;
-using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace RedisRpc {
+﻿namespace RedisRpc {
+	using Newtonsoft.Json;
+	using RedisRpc.Models;
+	using StackExchange.Redis;
+	using System;
+	using System.Collections.Generic;
+	using System.Linq;
 	internal static class Extentions {
 		public static JsonSerializerSettings JsonSettings { get; private set; }
 		public static string ToJson<T>(this T payload) {
@@ -14,7 +13,6 @@ namespace RedisRpc {
 		public static T GetContent<T>(this DeliveredMessage messageInfo) { 
 			return JsonConvert.DeserializeObject<T>(messageInfo.Payload.RawContent);
 		}
-
 
 		#region Configuration helpers
 		public static void AddHosts(this ConfigurationOptions configurationOptions, List<(string Host, int Port)> hosts) {

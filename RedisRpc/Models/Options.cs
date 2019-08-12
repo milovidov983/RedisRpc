@@ -1,5 +1,6 @@
 ﻿namespace RedisRpc.Models {
-	using StackExchange.Redis;
+    using RedisRpc.Interfaces;
+    using StackExchange.Redis;
 	using System;
 	using System.Collections.Generic;
 	public class Options {
@@ -8,6 +9,7 @@
 		//TODO отрефакторить, использовать стандартные настройки редиса тк эта коллекция излишество.
 		public List<(string Host, int Port)> HostsCollection { get; set; }
 		public ConfigurationOptions RedisConfigurationOptions { get; set; }
-		public TimeSpan Timeout { get; set; } = new TimeSpan(0, 0, 20);
+		public TimeSpan Timeout { get; set; } = new TimeSpan(0, 10, 0);
+		public ILogger Logger { get; set; }
 	}
 }

@@ -12,18 +12,20 @@
     internal class Client: IDisposable {
 		// ? как удалять отсюда?
 		private static readonly ConcurrentDictionary<Guid, ResponseMessage> awaitingRequests = new ConcurrentDictionary<Guid, ResponseMessage>();
-		// ! нужна еще одна коллекция для таймаут лямбд которые будут абортить TCS
+		// ! нужна еще одна коллекция для таймаут лямбд которые будут абортить TCS?
 
 		private readonly IDatabase database;
 		private readonly ISubscriber subscriber;
 		private readonly string responseTopic;
 		private readonly TimeSpan timeout;
+		private readonly ILogger logger;
 
-		public Client(IConnection connection) {
+		public Client(IConnection connection, ILogger logger) {
 			this.database = connection.Database;
 			this.subscriber = connection.Subscriber;
 			this.responseTopic = connection.ResponseTopic;
 			this.timeout = connection.Timeout;
+			this.logger = logger;
 		}
 
 		//TODO: не забыть про TimeSpan? timeout = null
@@ -83,16 +85,15 @@
 				var msg = await database.ListRightPopAsync(responseTopic);
 
 				while (msg.HasValue) {
-					var dm = JsonConvert.DeserializeObject<DeliveredMessage>(msg.ToString());
-					if(dm.Payload.Exception != null) {
-						/// Вот над этим надо подумать, предполагается что если внутри payload есть эксепшн 
-						/// который туда мог попасть только если его специально положили на стороне сервера,
-						/// то в таску кладём этот эксепшн но так ли это надо делать вот вопрос?
-						awaitingRequests[dm.CorrelationId].SetException(dm.Payload.Exception);
-					}
-					awaitingRequests[dm.CorrelationId].Payload = dm.Payload;
-					awaitingRequests.TryRemove(dm.CorrelationId, out _);
+					var dm = JsonConvert.DeserializeObject<DeliveredMessage>(msg);
 
+					if (awaitingRequests.ContainsKey(dm.CorrelationId)) {
+						awaitingRequests[dm.CorrelationId].Payload = dm.Payload;
+						awaitingRequests.TryRemove(dm.CorrelationId, out _);
+					} else {
+						logger.Fatal("The received CorrelationId does not match any of the sent ones.");
+						//TODO создать механизм очистки словаря от неактуальных значений которые отвалились по таймауту.
+					}
 					msg = await database.ListRightPopAsync(responseTopic);
 				}
 			});
@@ -103,9 +104,6 @@
 			if (subscriber != null) {
 				subscriber.UnsubscribeAll(CommandFlags.FireAndForget);
 			}
-			if(database != null) {
-				
-			}
 		}
 
 
@@ -114,8 +112,15 @@
 			private static System.Timers.Timer timer;
 
 			public ResponseMessage(TimeSpan timeout) {
-				this.Tcs = new TaskCompletionSource<Payload>(); ;
-				this.AddedPayload += (payload) => { this.Tcs.SetResult(payload); };
+				this.Tcs = new TaskCompletionSource<Payload>();
+				this.AddedPayload += (payload) => {
+					if(payload.Exception != null) {
+						this.Tcs.SetException(new RedisHubException("Error in remote service. See inner exception.", payload.Exception));
+					}
+					this.Tcs.SetResult(payload);
+				};
+
+
 				SetTimer(timeout);
 			}
 
@@ -139,11 +144,6 @@
 				timer.Elapsed += (Object source, ElapsedEventArgs e) => Abort();
 				timer.AutoReset = true;
 				timer.Enabled = true;
-			}
-
-			private static void OnTimedEvent(Object source, ElapsedEventArgs e) {
-				Console.WriteLine("The Elapsed event was raised at {0:HH:mm:ss.fff}",
-								  e.SignalTime);
 			}
 
 			public void SetException(Exception e) {

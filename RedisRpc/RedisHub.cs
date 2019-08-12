@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("RedisCalcService")]
+[assembly: InternalsVisibleTo("RedisCalc.Service")]
 
 namespace RedisRpc {
 	using RedisRpc.Helpers;
@@ -54,7 +54,7 @@ namespace RedisRpc {
 					timeout: options.Timeout
 					);
 
-				client = new Client(connection);
+				client = new Client(connection, options.Logger ?? new Logger());
 				client.StartMainLoop();
 
 			} catch(Exception e) {
