@@ -56,29 +56,23 @@
 
 		/// <summary>
 		/// Функция создает объект ResponseMessage который помещает его в коллекцию ожидания(?)
-		/// 
 		/// </summary>
-		/// <param name="correlationId">Уникальный id ответа.</param>
-		/// <returns></returns>
+		/// <param name="correlationId">
+		/// Unique id of the response.
+		/// </param>
+		/// <returns>
+		/// 
+		/// </returns>
 		public Task<Payload> Get(Guid correlationId, TimeSpan? timeout) {
-			// Подготовка объекта получающего ответ.
-			// Создаем объект для ответа
 			var msgResponse = new ResponseMessage(timeout ?? this.timeout);
-			//// Задача которая будет вызвана при получении ответа
-			//var tcs = new TaskCompletionSource<Payload>();
-			//// Привязываем задачу к событию
-			//msgResponse.AddedPayload += (payload) => { tcs.SetResult(payload); };
-			//msgResponse.Tcs = tcs;
-
 			// Кладем подготовленный объект в коллекцию ожидающих ответ.
 			awaitingRequests.TryAdd(correlationId, msgResponse);
-			//awaitingRequests[correlationId].AddedPayload += (payload) => { tcs.SetResult(payload); };
 
 			return msgResponse.Tcs.Task;
 		}
 
 		/// <summary>
-		/// Главный цикл запускает подписку на канал ответа ResponseTopic.
+		/// The main loop starts subscribing to the ResponseTopic response channel.
 		/// </summary>
 		public void StartMainLoop() {
 			subscriber.Subscribe(responseTopic, async (channel, message) => {
@@ -93,6 +87,7 @@
 					} else {
 						logger.Fatal("The received CorrelationId does not match any of the sent ones.");
 						//TODO создать механизм очистки словаря от неактуальных значений которые отвалились по таймауту.
+						// (функция Abort() в ResponseMessage)
 					}
 					msg = await database.ListRightPopAsync(responseTopic);
 				}
@@ -106,37 +101,64 @@
 			}
 		}
 
-
-		#region inherit classes
+		#region private class
+		/// <summary>
+		/// ResponseMessage encapsulates the logic for working with 
+		/// the asynchronous operation of receiving messages from the Redis list.
+		/// </summary>
 		private class ResponseMessage {
 			private static System.Timers.Timer timer;
 
+			/// <summary>
+			/// The type of delegate that will be called when the message is delivered from the Redis list.
+			/// </summary>
+			/// <param name="payload">
+			/// Object received from a remote service.
+			/// </param>
+			public delegate void Handler(Payload payload);
+
+			/// <summary>
+			/// Event that occurs when a load is added from the Redis list
+			/// </summary>
+			public event Handler AddedPayload;
+
+			/// <summary>
+			/// A task that ends when a message from a remote service arrives from the Redis list.
+			/// </summary>
+			public TaskCompletionSource<Payload> Tcs { get; }
+
+			/// <summary>
+			/// It is expected that this property will be assigned an object
+			/// that came from a remote service and received through the Redis list.
+			/// When assigning an object to this property, 
+			/// an event that completes the wait task will be raised.
+			/// </summary>
+			public Payload Payload {
+				set {
+					AddedPayload(value);
+				}
+			}
+
+			/// <summary>
+			/// ResponseMessage encapsulates the logic for working with 
+			/// the asynchronous operation of receiving messages from the Redis list.
+			/// </summary>
+			/// <param name="timeout">
+			/// Timeout after which the task is interrupted.
+			/// </param>
 			public ResponseMessage(TimeSpan timeout) {
 				this.Tcs = new TaskCompletionSource<Payload>();
 				this.AddedPayload += (payload) => {
-					if(payload.Exception != null) {
-						this.Tcs.SetException(new RedisHubException("Error in remote service. See inner exception.", payload.Exception));
+					if (payload.Exception != null) {
+						this.Tcs.SetException(
+							new RedisHubException("Error in remote service. See inner exception.", payload.Exception)
+							);
 					}
 					this.Tcs.SetResult(payload);
 				};
 
 
 				SetTimer(timeout);
-			}
-
-			// ? Тип делегата который будет вызван когда сообщение доставлено из очереди.
-			public delegate void Handler(Payload payload);
-			// Событие, возникающее при добавлении нагрузки из очереди редиса
-			public event Handler AddedPayload;
-			public TaskCompletionSource<Payload> Tcs { get; }
-			/// <summary>
-			/// При присваивании данному свойству объекта, 
-			/// будет вызвано событие добавления данных из очереди.
-			/// </summary>
-			public Payload Payload {
-				set {
-					AddedPayload(value);
-				}
 			}
 
 			private void SetTimer(TimeSpan timeout) {
