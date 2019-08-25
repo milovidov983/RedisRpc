@@ -14,6 +14,10 @@
 			return JsonConvert.DeserializeObject<T>(messageInfo.Payload.RawContent);
 		}
 
+		public static bool IsNullOrEmpty(this string value) => string.IsNullOrEmpty(value);
+		
+		
+
 		#region Configuration helpers
 		public static void AddHosts(this ConfigurationOptions configurationOptions, List<(string Host, int Port)> hosts) {
 			if(hosts?.Any() != true) {

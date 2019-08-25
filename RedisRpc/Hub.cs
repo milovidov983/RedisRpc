@@ -6,10 +6,11 @@
 	using StackExchange.Redis;
 	using System;
 	using System.Collections.Concurrent;
-	using System.Threading.Tasks;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
     using System.Timers;
 
-    internal class Client: IDisposable {
+    internal class Hub: IDisposable {
 		// ? как удалять отсюда?
 		private static readonly ConcurrentDictionary<Guid, ResponseMessage> awaitingRequests = new ConcurrentDictionary<Guid, ResponseMessage>();
 		// ! нужна еще одна коллекция для таймаут лямбд которые будут абортить TCS?
@@ -20,7 +21,7 @@
 		private readonly TimeSpan timeout;
 		private readonly ILogger logger;
 
-		public Client(IConnection connection, ILogger logger) {
+		public Hub(IConnection connection, ILogger logger) {
 			this.database = connection.Database;
 			this.subscriber = connection.Subscriber;
 			this.responseTopic = connection.ResponseTopic;
@@ -36,11 +37,13 @@
 				.WithRawContent(rawContent)
 				.Build();
 
-			var dm = new DeliveredMessage(responseTopic, payload);
+
+			var queueName = topic.Substring(topic.IndexOf("."));
+			var dm = new DeliveredMessage(queueName, responseTopic, payload);
 
 			var responseTask = Get(dm.CorrelationId, timeout);
-			await database.ListRightPushAsync(topic, dm.ToJson());
-			subscriber.Publish(topic, "new message come", CommandFlags.FireAndForget);
+			await database.ListRightPushAsync(queueName, dm.ToJson());
+			subscriber.Publish(queueName, "new message come", CommandFlags.FireAndForget);
 
 			var response = await responseTask;
 
@@ -93,6 +96,27 @@
 				}
 			});
 			subscriber.Publish(responseTopic, string.Empty);
+		}
+
+		public void DefineSubscription(string queue, Dictionary<string, Action<DeliveredMessage>> hendlers) {
+			subscriber.Subscribe(queue, async (channel, message) => {
+				var msg = await database.ListRightPopAsync(queue);
+
+				while (msg.HasValue) {
+					var dm = JsonConvert.DeserializeObject<DeliveredMessage>(msg);
+
+					if (hendlers.ContainsKey(dm.Payload.Topic)) {
+						awaitingRequests[dm.CorrelationId].Payload = dm.Payload;
+						awaitingRequests.TryRemove(dm.CorrelationId, out _);
+					} else {
+						logger.Fatal("The received CorrelationId does not match any of the sent ones.");
+						//TODO создать механизм очистки словаря от неактуальных значений которые отвалились по таймауту.
+						// (функция Abort() в ResponseMessage)
+					}
+					msg = await database.ListRightPopAsync(responseTopic);
+				}
+			});
+			subscriber.Publish(queue, string.Empty);
 		}
 
 		public void Dispose() {

@@ -39,7 +39,7 @@ namespace RedisRpc {
 		/// (чревато ошибками если не аккуратно написать систему по управлению этим велосипедом).
 		private readonly string responseTopic = $"response__{Guid.NewGuid()}";
 		private readonly ConnectionMultiplexer redis;
-		private readonly Client client;
+		private readonly Hub client;
 
 		public RedisHub(Options options) {
 			try {
@@ -54,7 +54,7 @@ namespace RedisRpc {
 					timeout: options.Timeout
 					);
 
-				client = new Client(connection, options.Logger ?? new Logger());
+				client = new Hub(connection, options.Logger ?? new Logger());
 				client.StartMainLoop();
 
 			} catch(Exception e) {
@@ -75,6 +75,15 @@ namespace RedisRpc {
 			return await client.GetResponse<TResponse, TRequest>(topic, request, raiseException, timeout);
 		}
 
+
+
+		public Task SubscribeAsync(string queueName, Action<DeliveredMessage> onMessage, int prefetchCount = 32) {
+			throw new NotImplementedException();
+		}
+
+
+
+
 		public void Dispose() {
 			if(redis != null) {
 				redis.Close();
@@ -89,8 +98,6 @@ namespace RedisRpc {
 		public async Task<TResponse> WithStreamGetResponse<TResponse, TRequest>(string topic, TRequest request, Stream stream, bool raiseException = true, TimeSpan? timeout = null) {
 			throw new NotImplementedException();
 		}
-
-
 
 		#endregion
 	}

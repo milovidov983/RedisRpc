@@ -10,7 +10,6 @@
 		private string extendedInfo;
 		private int? statusCode;
 		private Exception exception;
-		
 
 		public IPayloadBuilder WithRawContent(string rawContent) {
 			this.rawContent = rawContent ?? string.Empty;

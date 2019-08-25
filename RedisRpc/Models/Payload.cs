@@ -2,7 +2,7 @@
 	using RedisRpc.Builders;
 	using RedisRpc.Interfaces;
 	using System;
-	internal class Payload {
+	public class Payload {
 		public string RawContent;
 		public string Error;
 		public string ExtendedInfo;
@@ -10,7 +10,7 @@
 		public int? StatusCode;
 		public Exception Exception;
 
-		internal Payload(
+		public Payload(
 		  string rawContent,
 		  byte[] body,
 		  string error,
