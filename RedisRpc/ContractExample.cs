@@ -9,7 +9,7 @@ namespace SomeService.Contracts {
 	/// 
 	/// Contract getting something from microservice.
 	/// </summary>
-	public class GetSomething {
+	public class GetSomething  {
 		/// <summary>
 		/// The name of the queue to which microservice subscribes.
 		/// </summary>

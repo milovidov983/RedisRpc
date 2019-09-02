@@ -7,6 +7,7 @@
 	using System;
 	using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
     using System.Timers;
 
@@ -98,25 +99,87 @@
 			subscriber.Publish(responseTopic, string.Empty);
 		}
 
-		public void DefineSubscription(string queue, Dictionary<string, Action<DeliveredMessage>> hendlers) {
-			subscriber.Subscribe(queue, async (channel, message) => {
-				var msg = await database.ListRightPopAsync(queue);
+		/// <summary>
+		/// Содержит обработчики для очередей. Где,
+		/// string - имя очереди.
+		/// ConcurrentDictionary<string, ResponseMessage> - обработчики для данной очереди, где,
+		/// string - имя обрабатываемой команды,
+		/// Action<DeliveredMessage> - обработчик команды string.
+		/// </summary>
+		private static ConcurrentDictionary<string, ConcurrentDictionary<string, Action<DeliveredMessage>>> subscribers;
 
-				while (msg.HasValue) {
-					var dm = JsonConvert.DeserializeObject<DeliveredMessage>(msg);
+		private static void InitCommandHandlers() {
+			subscribers = new ConcurrentDictionary<string, ConcurrentDictionary<string, Action<DeliveredMessage>>>();
+		}
 
-					if (hendlers.ContainsKey(dm.Payload.Topic)) {
-						awaitingRequests[dm.CorrelationId].Payload = dm.Payload;
-						awaitingRequests.TryRemove(dm.CorrelationId, out _);
-					} else {
-						logger.Fatal("The received CorrelationId does not match any of the sent ones.");
-						//TODO создать механизм очистки словаря от неактуальных значений которые отвалились по таймауту.
-						// (функция Abort() в ResponseMessage)
+		public void DefineSubscription(string queue, Dictionary<string, Action<DeliveredMessage>> handlers) {
+			subscribers.TryAdd(queue, new ConcurrentDictionary<string, Action<DeliveredMessage>>(handlers));
+		}
+
+		public void SubscribeHandlers() {
+			foreach(var queue in subscribers.Keys) {
+				subscriber.Subscribe(queue, async (channel, message) => {
+					var msg = await database.ListRightPopAsync(queue);
+
+					while (msg.HasValue) {
+						var dm = JsonConvert.DeserializeObject<DeliveredMessage>(msg);
+						var topic = GetQueueTopic(dm.Topic);
+						if(topic.Queue != null) {
+							if (topic.Queue == queue) {
+								var getHendlersOperationStatus = subscribers.TryGetValue(queue, out var handlers);
+								if (getHendlersOperationStatus) {
+									var getHandlerOperationStatus = handlers.TryGetValue(topic.Command, out var handler);
+									if (getHandlerOperationStatus) {
+										try {
+											handler.Invoke(dm);
+										} catch(Exception e) {
+											CommandErrorHandler(topic, dm, e);
+										}
+									} else {
+										throw new Exception($"Internal error. Error to get handler for queue {queue} for command {topic.Command}");
+									}
+								} else {
+									throw new Exception($"Internal error. Error to get handlers for queue {queue}");
+								}
+							} else {
+								throw new Exception($"Unexpected queue name {topic.Queue} in queue {queue}");
+							}
+						} else {
+							throw new Exception($"Bad topic format {dm?.Topic}. Format must be 'queueName.commandName.rpc'");
+						}
 					}
-					msg = await database.ListRightPopAsync(responseTopic);
-				}
-			});
-			subscriber.Publish(queue, string.Empty);
+				});
+			}
+		}
+
+		private void CommandErrorHandler((string Queue, string Command) topic, DeliveredMessage dm, Exception e) {
+			throw new NotImplementedException();
+		}
+
+		//преждевременная(?) оптимизация
+		private (string Queue, string Command) GetQueueTopic(string topic) {
+			var stopic = topic.AsSpan();
+			var qname = stopic.Slice(0, stopic.IndexOf('.'));
+			if (qname.IsEmpty) {
+				return (null, null);
+			}
+			var command = stopic.Slice(qname.Length, stopic.LastIndexOf('.'));
+			if (command.IsEmpty) {
+				return (null, null);
+			}
+			return (Queue: qname.ToString(), Command: command.ToString());
+			
+		}
+
+		/// <summary>
+		/// Последняя стадия инициализации подписчиков. 
+		/// Запускает процесс публикации с пустым содержимым тем самым позволяя 
+		/// системе стартовать и проверить есть-ли что то в очереди.
+		/// </summary>
+		private void Bootstrap() {
+			foreach(var queue in subscribers) {
+				subscriber.Publish(queue.Key, string.Empty);
+			}
 		}
 
 		public void Dispose() {
