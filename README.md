@@ -1,3 +1,4 @@
 # RedisRpc
 
-Максимальный размер пакета не более 512 мб
+Max pkg size 512 mb
+Harsh alpha. Nothing works.
