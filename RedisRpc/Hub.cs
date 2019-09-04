@@ -124,35 +124,42 @@
 					while (msg.HasValue) {
 						var dm = JsonConvert.DeserializeObject<DeliveredMessage>(msg);
 						var topic = GetQueueTopic(dm.Topic);
-						if(topic.Queue != null) {
-							if (topic.Queue == queue) {
-								var getHendlersOperationStatus = subscribers.TryGetValue(queue, out var handlers);
-								if (getHendlersOperationStatus) {
-									var getHandlerOperationStatus = handlers.TryGetValue(topic.Command, out var handler);
-									if (getHandlerOperationStatus) {
-										try {
-											handler.Invoke(dm);
-										} catch(Exception e) {
-											CommandErrorHandler(topic, dm, e);
-										}
-									} else {
-										throw new Exception($"Internal error. Error to get handler for queue {queue} for command {topic.Command}");
-									}
-								} else {
-									throw new Exception($"Internal error. Error to get handlers for queue {queue}");
-								}
-							} else {
+						Action<DeliveredMessage> handler;
+						try {
+							if (topic.Queue != null) {
+								throw new Exception($"Bad topic format {dm?.Topic}. Format must be 'queueName.commandName.rpc'");
+							}
+							if (topic.Queue != queue) {
 								throw new Exception($"Unexpected queue name {topic.Queue} in queue {queue}");
 							}
-						} else {
-							throw new Exception($"Bad topic format {dm?.Topic}. Format must be 'queueName.commandName.rpc'");
+							var getHendlersOperationStatus = subscribers.TryGetValue(queue, out var handlers);
+							if (!getHendlersOperationStatus) {
+								throw new Exception($"Internal error. Error to get handlers for queue {queue}");
+							}
+							var getHandlerOperationStatus = handlers.TryGetValue(topic.Command, out handler);
+							if (!getHandlerOperationStatus) {
+								throw new Exception($"Internal error. Error to get handler for queue {queue} for command {topic.Command}");
+							}
+						} catch(Exception e) {
+							InternalExceptionHandler(dm, e);
+							break;
+						}
+
+						try {
+							handler.Invoke(dm);
+						} catch(Exception e) {
+							CommandExceptionHandler(topic, dm, e);
 						}
 					}
 				});
 			}
 		}
 
-		private void CommandErrorHandler((string Queue, string Command) topic, DeliveredMessage dm, Exception e) {
+		private void InternalExceptionHandler(DeliveredMessage dm, Exception e) {
+			throw new NotImplementedException();
+		}
+
+		private void CommandExceptionHandler((string Queue, string Command) topic, DeliveredMessage dm, Exception e) {
 			throw new NotImplementedException();
 		}
 
